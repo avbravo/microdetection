@@ -1,0 +1,174 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package com.microdetection.security;
+
+import com.jettraui.ui.alert.Alert;
+import com.jettraui.ui.alert.AlertType;
+import com.jettraui.ui.core.WebComponent;
+import com.jettraui.ui.jettra.SessionConfigurator;
+import com.jettraui.ui.login.Login;
+import com.jettraui.ui.login.LoginAdvanced;
+import com.jettraui.ui.login.LoginInfoUI;
+import com.jettraui.ui.login.LoginSimple;
+import com.microdetection.config.ConfigurationProperties;
+import jakarta.inject.Inject;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
+import java.util.Map;
+
+/**
+ *
+ * @author avbravo
+ */
+@WebServlet(urlPatterns = "/login")
+public class LoginController extends HttpServlet {
+
+    // <editor-fold defaultstate="collapsed" desc="Inject">
+    @Inject
+    ConfigurationProperties configurationProperties;
+
+// </editor-fold>
+    // Credenciales de prueba
+    private static final String VALID_USERNAME = "admin";
+    private static final String VALID_PASSWORD = "denver16";
+    private static final String VALID_ROLE = "supervisor"; // Rol esperado para el usuario tester
+
+    // <editor-fold defaultstate="collapsed" desc="Roles disponibles (Value HTML -> Texto visible)">
+    private static final Map<String, String> ROLES_LIST = Map.of(
+            "admin", "Facultativo",
+            "supervisor", "Tecnico",
+            "standard", "Coordinador Centro",
+            "analista", "Analista Desarrollador",
+            "tecnico-verificador", "Técnico Verificado",
+            "consultor-externo", "Consultor Externo"
+    );
+
+// </editor-fold>
+    // Maneja la visualización del formulario de login (GET)
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("text/html;charset=UTF-8");
+
+        // WebComponent errorComponent = null;
+        Alert alert = null;
+        String errorParam = request.getParameter("error");
+        String logoutParam = request.getParameter("logout"); // <-- NUEVA LÍNEA
+
+        if (errorParam != null && "true".equals(errorParam)) {
+            // Usamos la clase AlertComponent para mostrar el error
+            alert = new Alert(
+                    "❌Credenciales inválidas",
+                    AlertType.DANGER
+            );
+
+        } // Mostrar mensaje de éxito si viene del logout
+        else {
+            if (logoutParam != null && "true".equals(logoutParam)) { // <-- NUEVA LÍNEA
+                alert = new Alert(
+                        "✅ Sesión cerrada exitosamente. ¡Regrese pronto!",
+                        AlertType.INFO
+                );
+            }
+        }
+        WebComponent login = null;
+        LoginInfoUI loginInfoUI = new LoginInfoUI(configurationProperties.getLoginTitle(),
+                configurationProperties.getApplicativeMetaTitle(), configurationProperties.getLoginLogoSrc(),
+                configurationProperties.getLoginLogoClass(), configurationProperties.getFlowbiteMinJs(),
+                configurationProperties.getTailwindcssJs());
+       System.out.println("\t <--[( LoginInfoUi )]--> " + loginInfoUI.toString());
+
+        switch (configurationProperties.getLoginStyle()) {
+            case "login-simple":
+                login = new LoginSimple(request.getContextPath(), alert, loginInfoUI);
+                break;
+
+           case "login-advanced":
+                login = new Login(request.getContextPath(), alert, ROLES_LIST, loginInfoUI);
+                break;
+//            case "login-advanced":
+//                System.out.println("\t es Advanced...");
+//                login = new LoginAdvanced(request.getContextPath(), alert, ROLES_LIST, loginInfoUI);
+//                break;
+        }
+        // Instanciar y renderizar el componente de login
+
+        response.getWriter().write(login.render());
+    }
+
+    // Maneja el envío del formulario de login (POST)
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // 1. Obtener los valores de las cajas de texto del formulario
+        String submittedUsername = request.getParameter("username");
+        String submittedPassword = request.getParameter("password");
+        String submittedRole = "";
+        if (configurationProperties.getLoginStyle().equals("login-advanced")) {
+            submittedRole = request.getParameter("userRol"); // <-- NUEVO
+        }
+        System.out.println("\t...................................................................");
+        System.out.println("\t username " + submittedUsername + " : " + submittedPassword + " : " + submittedRole);
+        System.out.println("\t...................................................................");
+        // 2. Lógica de autenticación: Compara los valores ingresados con los válidos
+        boolean credentialsValid = Boolean.FALSE;
+
+        switch (configurationProperties.getLoginStyle()) {
+            case "login-simple":
+                credentialsValid
+                        = VALID_USERNAME.equals(submittedUsername) && VALID_PASSWORD.equals(submittedPassword);
+
+                break;
+            case "login-extend":
+                credentialsValid
+                        = VALID_USERNAME.equals(submittedUsername) && VALID_PASSWORD.equals(submittedPassword);
+                break;
+            case "login-advanced":
+                credentialsValid
+                        = VALID_USERNAME.equals(submittedUsername)
+                        && VALID_PASSWORD.equals(submittedPassword)
+                        && VALID_ROLE.equals(submittedRole);
+                break;
+
+        }
+
+        // 3. Control de Evento (Decisión)
+        if (credentialsValid) {
+            
+            
+            // A. Credenciales Válidas: Crear sesión y redirigir al dashboard
+            // Uso de la clase Fluent:
+SessionConfigurator.configure(request.getSession(true))
+    .withUsername(submittedUsername)
+    .withUserId(0L)
+    .withUserRole(submittedRole, 0L)
+    .withCssFramework("tailwind")
+    .setAuthenticationStatus(Boolean.TRUE, Boolean.TRUE)
+    .setMaxInactiveInterval(configurationProperties.getSessionMinutosExpiracion()) 
+    .apply(); // O simplemente terminar con setMaxInactiveInterval(seconds);
+            
+//            // Cuando se conecta a la base de datos rellena los otros campos
+//            HttpSession session = request.getSession(true);
+//            session.setAttribute("username", submittedUsername);
+//            session.setAttribute("iduser", 0L);
+//            session.setAttribute("name", submittedUsername);
+//            session.setAttribute("userRol", submittedRole);
+//            session.setAttribute("idrol", 0L);
+//            session.setAttribute("cssFramework", "tailwind");
+//            session.setAttribute("isAuthentication", Boolean.TRUE);
+//            session.setAttribute("hasAuthorization", Boolean.TRUE);
+//
+//            session.setMaxInactiveInterval(configurationProperties.getSessionMinutosExpiracion()); // Sesión de 30 minutos
+
+//            response.sendRedirect(request.getContextPath() + "/dashboard");
+            response.sendRedirect(request.getContextPath() + "/api/dashboard");
+        } else {
+            // B. Credenciales Inválidas: Redirigir al GET con parámetro de error
+            response.sendRedirect(request.getContextPath() + "/login?error=true");
+        }
+    }
+}
