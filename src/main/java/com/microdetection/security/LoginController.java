@@ -9,7 +9,6 @@ import com.jettraui.ui.alert.AlertType;
 import com.jettraui.ui.core.WebComponent;
 import com.jettraui.ui.jettra.SessionConfigurator;
 import com.jettraui.ui.login.Login;
-import com.jettraui.ui.login.LoginAdvanced;
 import com.jettraui.ui.login.LoginInfoUI;
 import com.jettraui.ui.login.LoginSimple;
 import com.microdetection.config.ConfigurationProperties;
@@ -18,7 +17,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Map;
 
@@ -82,20 +80,20 @@ public class LoginController extends HttpServlet {
                 configurationProperties.getLoginLogoClass(), configurationProperties.getFlowbiteMinJs(),
                 configurationProperties.getTailwindcssJs());
        System.out.println("\t <--[( LoginInfoUi )]--> " + loginInfoUI.toString());
-
-        switch (configurationProperties.getLoginStyle()) {
-            case "login-simple":
-                login = new LoginSimple(request.getContextPath(), alert, loginInfoUI);
-                break;
-
-           case "login-advanced":
-                login = new Login(request.getContextPath(), alert, ROLES_LIST, loginInfoUI);
-                break;
-//            case "login-advanced":
-//                System.out.println("\t es Advanced...");
-//                login = new LoginAdvanced(request.getContextPath(), alert, ROLES_LIST, loginInfoUI);
+  login = new Login(request.getContextPath(), alert, ROLES_LIST, loginInfoUI);
+//        switch (configurationProperties.getLoginStyle()) {
+//            case "login-simple":
+//                login = new LoginSimple(request.getContextPath(), alert, loginInfoUI);
 //                break;
-        }
+//
+//           case "login-advanced":
+//                login = new Login(request.getContextPath(), alert, ROLES_LIST, loginInfoUI);
+//                break;
+////            case "login-advanced":
+////                System.out.println("\t es Advanced...");
+////                login = new LoginAdvanced(request.getContextPath(), alert, ROLES_LIST, loginInfoUI);
+////                break;
+//        }
         // Instanciar y renderizar el componente de login
 
         response.getWriter().write(login.render());

@@ -94,13 +94,17 @@
             <artifactId>jettraui</artifactId>
             <version>0.1</version>
         </dependency>-->
+<!--        <dependency>
+            <groupId>com.jettraui</groupId>
+            <artifactId>jettra-ui</artifactId>
+            <version>0.2</version>
+        </dependency>-->
         <dependency>
             <groupId>com.jettraui</groupId>
             <artifactId>jettra-ui</artifactId>
             <version>0.2</version>
         </dependency>
-        
-         <dependency>
+        <dependency>
             <groupId>com.github.avbravo</groupId>
             <artifactId>jmoordb-core-annotations</artifactId>
             <version>${version.jmoordb-core-annotations}</version>
